@@ -5,5 +5,5 @@
 
 local modpath = minetest.get_modpath("digall_plus")
 
-dofile(modpath.."/default_plus.lua")
-dofile(modpath.."/dig_triangle.lua")
+dofile(modpath.."/default.lua")
+dofile(modpath.."/triangle.lua")

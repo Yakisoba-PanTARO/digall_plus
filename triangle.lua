@@ -3,7 +3,7 @@
 -- https://github.com/Yakisoba-PanTARO/digall_plus
 ------------------------------------------------------------
 
-local function dig_triangle_impl(pos, node, facedir, digger, radius)
+local function triangle_impl(pos, node, facedir, digger, radius)
    if radius < 1 then
       return
    end
@@ -26,34 +26,42 @@ local function dig_triangle_impl(pos, node, facedir, digger, radius)
    for _, p in ipairs(poss) do
       local n = minetest.get_node(p)
       minetest.node_dig(p, n, digger)
-      dig_triangle_impl(p, n, facedir, digger, radius-1)
+      triangle_impl(p, n, facedir, digger, radius-1)
    end
 end
 
-local function dig_triangle(pos, node, digger, radius)
+local function triangle(pos, node, digger, radius)
    local dir = digger:get_look_dir()
    local facedir = minetest.dir_to_facedir(dir)
-   dig_triangle_impl(pos, node, facedir, digger, radius)
+   triangle_impl(pos, node, facedir, digger, radius)
 end
 
-local function dig_triangle_tunnel(pos, node, digger, radius, depth)
+local function triangle_tunnel(pos, node, digger, radius, depth)
    if depth < 1 then
       return
    end
    local dir = digger:get_look_dir()
    local facedir = minetest.dir_to_facedir(dir)
-   dig_triangle_impl(pos, node, facedir, digger, radius)
+   triangle_impl(pos, node, facedir, digger, radius)
    local pos2 = {
       x = pos.x + dir.x,
       y = pos.y, -- Y軸に関しては不変
       z = pos.z + dir.z,
    }
    local node2 = minetest.get_node(pos2)
-   dig_triangle_tunnel(pos2, node2, digger, radius, depth-1)
+   triangle_tunnel(pos2, node2, digger, radius, depth-1)
 end
 
 ------------------------------------------------------------
 digall.register_algorithm(
-   "digall_plus:triangle", dig_triangle)
+   "digall_plus:triangle", {
+      description = "Triangle Algorithm",
+      default_args = {3},
+      func = triangle,
+})
 digall.register_algorithm(
-   "digall_plus:triangle_tunnel", dig_triangle_tunnel)
+   "digall_plus:triangle_tunnel", {
+      description = "Triangle Tunnel Algorithm",
+      default_args = {3, 5},
+      func = triangle_tunnel
+})
