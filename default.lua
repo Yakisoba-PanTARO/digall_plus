@@ -3,51 +3,77 @@
 -- https://github.com/Yakisoba-PanTARO/digall_plus
 ------------------------------------------------------------
 
-local function default_impl
-   (pos, node, digger, range, original_pos, directions)
-   for _, dir in ipairs(directions) do
-      local pos2 = {
-         x = pos.x + dir.x,
-         y = pos.y + dir.y,
-         z = pos.z + dir.z,
-      }
-      local node2 = minetest.get_node(pos2)
-      if (node2.name == node.name and
-          (math.abs(original_pos.x - pos2.x) <= range.x) and
-          (math.abs(original_pos.y - pos2.y) <= range.y) and
-          (math.abs(original_pos.z - pos2.z) <= range.z)) then
-         minetest.node_dig(pos2, node2, digger)
-         default_impl(pos2, node2, digger, range, original_pos, directions)
-      end
-   end
+------------------------------------------------------------
+-- digall_plus:default_*はdigall:defaultの強化版です。
+------------------------------------------------------------
+
+local function default_upper(pos, node, digger, range)
+   digall.default_algorithm_impl(
+      pos, node, digger, function(pos1, node1, pos2, node2, digger)
+         if (node1.name == node2.name             and
+             math.abs(pos.x - pos2.x) <= range.x  and
+             math.abs(pos.y - pos2.y) <= range.y  and
+             math.abs(pos.z - pos2.z) <= range.z  and
+             pos2.y - pos.y >= 0)                 then
+            return true
+         end
+         return false
+   end)
 end
 
+local function default_upper_without_range(pos, node, digger)
+   digall.default_algorithm_impl(
+      pos, node, digger, function(pos1, node1, pos2, node2, digger)
+         return (node1.name == node2.name and pos2.y - pos.y >= 0)
+   end)
+end
+
+local function default_lower(pos, node, digger, range)
+   digall.default_algorithm_impl(
+      pos, node, digger, function(pos1, node1, pos2, node2, digger)
+         if (node1.name == node2.name             and
+             math.abs(pos.x - pos2.x) <= range.x  and
+             math.abs(pos.y - pos2.y) <= range.y  and
+             math.abs(pos.z - pos2.z) <= range.z  and
+             pos2.y - pos.y <= 0)                 then
+            return true
+         end
+         return false
+   end)
+end
+
+local function default_lower_without_range(pos, node, digger)
+   digall.default_algorithm_impl(
+      pos, node, digger, function(pos1, node1, pos2, node2, digger)
+         return (node1.name == node2.name and pos2.y - pos.y <= 0)
+   end)
+end
+
+------------------------------------------------------------
+-- REGISTER ALGORITHMS
 ------------------------------------------------------------
 digall.register_algorithm(
    "digall_plus:default_upper", {
       description = "Default Upper Algorithm",
       default_args = {{x = 3, y = 3, z = 3}},
-      func = function(pos, node, digger, range)
-         default_impl(pos, node, digger, range, pos, {
-                         { x =  0, y =  0, z = -1 },
-                         { x =  0, y =  0, z =  1 },
-                         { x =  0, y =  1, z =  0 },
-                         { x = -1, y =  0, z =  0 },
-                         { x =  1, y =  0, z =  0 },
-         })
-      end,
+      func = default_upper,
 })
+
+digall.register_algorithm(
+   "digall_plus:default_upper_without_range", {
+      description = "Default Upper Algorithm Without Range",
+      func = default_upper_without_range,
+})
+
 digall.register_algorithm(
    "digall_plus:default_lower", {
       description = "Default Lower Algorithm",
       default_args = {{x = 3, y = 3, z = 3}},
-      func = function(pos, node, digger, range)
-         default_impl(pos, node, digger, range, pos, {
-                         { x =  0, y =  0, z = -1 },
-                         { x =  0, y =  0, z =  1 },
-                         { x =  0, y = -1, z =  0 },
-                         { x = -1, y =  0, z =  0 },
-                         { x =  1, y =  0, z =  0 },
-         })
-      end
+      func = default_lower,
+})
+
+digall.register_algorithm(
+   "digall_plus:default_lower_without_range", {
+      description = "Default Lower Algorithm Without Range",
+      func = default_lower_without_range,
 })
